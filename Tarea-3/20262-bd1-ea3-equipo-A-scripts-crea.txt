@@ -1,0 +1,298 @@
+--
+-- Scripst de Creación de la Base de Datos
+--
+-- Todas las instrucciones se DEBEN EJECUTAR EN SECUENCIA SIN ERRORES
+-- NOTA: Ojo con las tablas relacionadas. Primero las independientes y después las dependientes
+--
+
+--
+-- Creación de las tablas
+-- 
+
+CREATE TABLE rol (
+    id_rol SERIAL PRIMARY KEY,
+    nombre_rol VARCHAR(30) NOT NULL,
+    descripcion VARCHAR(255),
+    CONSTRAINT uk_rol_nombre_rol UNIQUE (nombre_rol)
+);
+
+CREATE TABLE tipo_usuario (
+    id_tipo_usuario SERIAL PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    CONSTRAINT uk_tipo_usuario_nombre_tipo UNIQUE (nombre_tipo)
+);
+
+CREATE TABLE interes (
+    id_interes SERIAL PRIMARY KEY,
+    nombre_interes VARCHAR(50) NOT NULL,
+    CONSTRAINT uk_interes_nombre_interes UNIQUE (nombre_interes)
+);
+
+CREATE TABLE habilidad (
+    id_habilidad SERIAL PRIMARY KEY,
+    nombre_habilidad VARCHAR(50) NOT NULL,
+    CONSTRAINT uk_habilidad_nombre_habilidad UNIQUE (nombre_habilidad)
+);
+
+CREATE TABLE tipo_servicio (
+    id_tipo_servicio SERIAL PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    CONSTRAINT uk_tipo_servicio_nombre_tipo UNIQUE (nombre_tipo)
+);
+
+CREATE TABLE tipo_producto (
+    id_tipo_producto SERIAL PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    CONSTRAINT uk_tipo_producto_nombre_tipo UNIQUE (nombre_tipo)
+);
+
+CREATE TABLE tipo_evento (
+    id_tipo_evento SERIAL PRIMARY KEY,
+    nombre_tipo VARCHAR(50) NOT NULL,
+    descripcion VARCHAR(255),
+    CONSTRAINT uk_tipo_evento_nombre_tipo UNIQUE (nombre_tipo)
+);
+
+CREATE TABLE etiqueta (
+    id_etiqueta SERIAL PRIMARY KEY,
+    nombre_etiqueta VARCHAR(50) NOT NULL,
+    CONSTRAINT uk_etiqueta_nombre_etiqueta UNIQUE (nombre_etiqueta)
+);
+
+CREATE TABLE chat (
+    id_chat SERIAL PRIMARY KEY,
+    fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE usuario (
+    id_usuario SERIAL PRIMARY KEY,
+    id_rol INTEGER NOT NULL,
+    id_tipo_usuario INTEGER NOT NULL,
+    nombre_completo VARCHAR(80) NOT NULL,
+    nombre_usuario VARCHAR(50) NOT NULL,
+    correo VARCHAR(100) NOT NULL,
+    contraseña VARCHAR(50) NOT NULL,
+    CONSTRAINT uk_usuario_nombre_usuario UNIQUE (nombre_usuario),
+    CONSTRAINT uk_usuario_correo UNIQUE (correo),
+    CONSTRAINT fk_usuario_rol FOREIGN KEY (id_rol) REFERENCES rol (id_rol),
+    CONSTRAINT fk_usuario_tipo_usuario FOREIGN KEY (id_tipo_usuario) REFERENCES tipo_usuario (id_tipo_usuario)
+);
+
+CREATE TABLE perfil (
+    id_perfil SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    foto_perfil_url VARCHAR(255),
+    biografia VARCHAR(500),
+    fecha_actualizacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uk_perfil_id_usuario UNIQUE (id_usuario),
+    CONSTRAINT fk_perfil_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE publicacion (
+    id_publicacion SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    contenido_texto VARCHAR(1000),
+    contenido_multimedia VARCHAR(255),
+    fecha_hora_publicacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    estado_publicacion VARCHAR(20) NOT NULL,
+    CONSTRAINT fk_publicacion_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT ck_publicacion_estado CHECK (estado_publicacion IN ('PUBLICADO', 'OCULTO', 'ELIMINADO'))
+);
+
+CREATE TABLE comentario (
+    id_comentario SERIAL PRIMARY KEY,
+    id_publicacion INTEGER NOT NULL,
+    id_usuario INTEGER NOT NULL,
+    contenido_comentario VARCHAR(500) NOT NULL,
+    fecha_hora_comentario TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id_comentario_padre INTEGER,
+    CONSTRAINT fk_comentario_publicacion FOREIGN KEY (id_publicacion) REFERENCES publicacion (id_publicacion),
+    CONSTRAINT fk_comentario_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_comentario_padre FOREIGN KEY (id_comentario_padre) REFERENCES comentario (id_comentario)
+);
+
+CREATE TABLE grupo (
+    id_grupo SERIAL PRIMARY KEY,
+    id_usuario_creador INTEGER NOT NULL,
+    nombre_grupo VARCHAR(80) NOT NULL,
+    CONSTRAINT fk_grupo_usuario_creador FOREIGN KEY (id_usuario_creador) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE servicio (
+    id_servicio SERIAL PRIMARY KEY,
+    id_tipo_servicio INTEGER NOT NULL,
+    id_usuario INTEGER NOT NULL,
+    precio NUMERIC(10,2),
+    CONSTRAINT fk_servicio_tipo_servicio FOREIGN KEY (id_tipo_servicio) REFERENCES tipo_servicio (id_tipo_servicio),
+    CONSTRAINT fk_servicio_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE producto (
+    id_producto SERIAL PRIMARY KEY,
+    id_tipo_producto INTEGER NOT NULL,
+    id_usuario INTEGER NOT NULL,
+    precio NUMERIC(10,2),
+    CONSTRAINT fk_producto_tipo_producto FOREIGN KEY (id_tipo_producto) REFERENCES tipo_producto (id_tipo_producto),
+    CONSTRAINT fk_producto_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE evento (
+    id_evento SERIAL PRIMARY KEY,
+    id_tipo_evento INTEGER NOT NULL,
+    id_usuario_organizador INTEGER NOT NULL,
+    fecha DATE NOT NULL,
+    hora TIME NOT NULL,
+    lugar VARCHAR(150),
+    CONSTRAINT fk_evento_tipo_evento FOREIGN KEY (id_tipo_evento) REFERENCES tipo_evento (id_tipo_evento),
+    CONSTRAINT fk_evento_usuario_organizador FOREIGN KEY (id_usuario_organizador) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE mensaje (
+    id_mensaje SERIAL PRIMARY KEY,
+    id_chat INTEGER NOT NULL,
+    id_usuario_emisor INTEGER NOT NULL,
+    contenido_mensaje VARCHAR(500) NOT NULL,
+    fecha_hora_envio TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_mensaje_chat FOREIGN KEY (id_chat) REFERENCES chat (id_chat),
+    CONSTRAINT fk_mensaje_usuario_emisor FOREIGN KEY (id_usuario_emisor) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE resena (
+    id_resena SERIAL PRIMARY KEY,
+    id_usuario_autor INTEGER NOT NULL,
+    id_servicio INTEGER,
+    id_producto INTEGER,
+    id_evento INTEGER,
+    calificacion INTEGER NOT NULL,
+    comentario_resena VARCHAR(500),
+    CONSTRAINT fk_resena_usuario_autor FOREIGN KEY (id_usuario_autor) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_resena_servicio FOREIGN KEY (id_servicio) REFERENCES servicio (id_servicio),
+    CONSTRAINT fk_resena_producto FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
+    CONSTRAINT fk_resena_evento FOREIGN KEY (id_evento) REFERENCES evento (id_evento),
+    CONSTRAINT ck_resena_calificacion CHECK (calificacion BETWEEN 1 AND 5),
+    CONSTRAINT ck_resena_un_solo_destino CHECK (
+        (CASE WHEN id_servicio IS NOT NULL THEN 1 ELSE 0 END
+       + CASE WHEN id_producto IS NOT NULL THEN 1 ELSE 0 END
+       + CASE WHEN id_evento IS NOT NULL THEN 1 ELSE 0 END) = 1
+    )
+);
+
+CREATE TABLE notificacion (
+    id_notificacion SERIAL PRIMARY KEY,
+    id_usuario_destino INTEGER NOT NULL,
+    id_publicacion INTEGER,
+    id_comentario INTEGER,
+    leida BOOLEAN NOT NULL DEFAULT FALSE,
+    fecha_hora_notificacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notificacion_usuario_destino FOREIGN KEY (id_usuario_destino) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_notificacion_publicacion FOREIGN KEY (id_publicacion) REFERENCES publicacion (id_publicacion),
+    CONSTRAINT fk_notificacion_comentario FOREIGN KEY (id_comentario) REFERENCES comentario (id_comentario)
+);
+
+CREATE TABLE venta (
+    id_venta SERIAL PRIMARY KEY,
+    id_usuario_comprador INTEGER NOT NULL,
+    id_usuario_vendedor INTEGER NOT NULL,
+    fecha_hora_venta TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    total NUMERIC(10,2) NOT NULL,
+    CONSTRAINT fk_venta_usuario_comprador FOREIGN KEY (id_usuario_comprador) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_venta_usuario_vendedor FOREIGN KEY (id_usuario_vendedor) REFERENCES usuario (id_usuario)
+);
+
+CREATE TABLE seguidor (
+    id_seguidor SERIAL PRIMARY KEY,
+    id_usuario_seguidor INTEGER NOT NULL,
+    id_usuario_seguido INTEGER NOT NULL,
+    CONSTRAINT fk_seguidor_usuario_seguidor FOREIGN KEY (id_usuario_seguidor) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_seguidor_usuario_seguido FOREIGN KEY (id_usuario_seguido) REFERENCES usuario (id_usuario),
+    CONSTRAINT uk_seguidor_par UNIQUE (id_usuario_seguidor, id_usuario_seguido)
+);
+
+CREATE TABLE usuario_interes (
+    id_usuario_interes SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    id_interes INTEGER NOT NULL,
+    CONSTRAINT fk_usuario_interes_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_usuario_interes_interes FOREIGN KEY (id_interes) REFERENCES interes (id_interes),
+    CONSTRAINT uk_usuario_interes_par UNIQUE (id_usuario, id_interes)
+);
+
+CREATE TABLE usuario_habilidad (
+    id_usuario_habilidad SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    id_habilidad INTEGER NOT NULL,
+    CONSTRAINT fk_usuario_habilidad_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_usuario_habilidad_habilidad FOREIGN KEY (id_habilidad) REFERENCES habilidad (id_habilidad),
+    CONSTRAINT uk_usuario_habilidad_par UNIQUE (id_usuario, id_habilidad)
+);
+
+CREATE TABLE usuario_grupo (
+    id_usuario_grupo SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    id_grupo INTEGER NOT NULL,
+    CONSTRAINT fk_usuario_grupo_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_usuario_grupo_grupo FOREIGN KEY (id_grupo) REFERENCES grupo (id_grupo),
+    CONSTRAINT uk_usuario_grupo_par UNIQUE (id_usuario, id_grupo)
+);
+
+CREATE TABLE usuario_evento (
+    id_usuario_evento SERIAL PRIMARY KEY,
+    id_usuario INTEGER NOT NULL,
+    id_evento INTEGER NOT NULL,
+    CONSTRAINT fk_usuario_evento_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT fk_usuario_evento_evento FOREIGN KEY (id_evento) REFERENCES evento (id_evento),
+    CONSTRAINT uk_usuario_evento_par UNIQUE (id_usuario, id_evento)
+);
+
+CREATE TABLE publicacion_etiqueta (
+    id_publicacion_etiqueta SERIAL PRIMARY KEY,
+    id_publicacion INTEGER NOT NULL,
+    id_etiqueta INTEGER NOT NULL,
+    CONSTRAINT fk_publicacion_etiqueta_publicacion FOREIGN KEY (id_publicacion) REFERENCES publicacion (id_publicacion),
+    CONSTRAINT fk_publicacion_etiqueta_etiqueta FOREIGN KEY (id_etiqueta) REFERENCES etiqueta (id_etiqueta),
+    CONSTRAINT uk_publicacion_etiqueta_par UNIQUE (id_publicacion, id_etiqueta)
+);
+
+CREATE TABLE chat_usuario (
+    id_chat_usuario SERIAL PRIMARY KEY,
+    id_chat INTEGER NOT NULL,
+    id_usuario INTEGER NOT NULL,
+    CONSTRAINT fk_chat_usuario_chat FOREIGN KEY (id_chat) REFERENCES chat (id_chat),
+    CONSTRAINT fk_chat_usuario_usuario FOREIGN KEY (id_usuario) REFERENCES usuario (id_usuario),
+    CONSTRAINT uk_chat_usuario_par UNIQUE (id_chat, id_usuario)
+);
+
+CREATE TABLE venta_producto (
+    id_venta_producto SERIAL PRIMARY KEY,
+    id_venta INTEGER NOT NULL,
+    id_producto INTEGER NOT NULL,
+    cantidad INTEGER NOT NULL,
+    precio_unitario NUMERIC(10,2) NOT NULL,
+    CONSTRAINT fk_venta_producto_venta FOREIGN KEY (id_venta) REFERENCES venta (id_venta),
+    CONSTRAINT fk_venta_producto_producto FOREIGN KEY (id_producto) REFERENCES producto (id_producto),
+    CONSTRAINT uk_venta_producto_par UNIQUE (id_venta, id_producto)
+);
+
+CREATE TABLE venta_servicio (
+    id_venta_servicio SERIAL PRIMARY KEY,
+    id_venta INTEGER NOT NULL,
+    id_servicio INTEGER NOT NULL,
+    precio NUMERIC(10,2) NOT NULL,
+    CONSTRAINT fk_venta_servicio_venta FOREIGN KEY (id_venta) REFERENCES venta (id_venta),
+    CONSTRAINT fk_venta_servicio_servicio FOREIGN KEY (id_servicio) REFERENCES servicio (id_servicio),
+    CONSTRAINT uk_venta_servicio_par UNIQUE (id_venta, id_servicio)
+);
+
+CREATE TABLE venta_evento (
+    id_venta_evento SERIAL PRIMARY KEY,
+    id_venta INTEGER NOT NULL,
+    id_evento INTEGER NOT NULL,
+    cantidad INTEGER NOT NULL,
+    precio_unitario NUMERIC(10,2) NOT NULL,
+    CONSTRAINT fk_venta_evento_venta FOREIGN KEY (id_venta) REFERENCES venta (id_venta),
+    CONSTRAINT fk_venta_evento_evento FOREIGN KEY (id_evento) REFERENCES evento (id_evento),
+    CONSTRAINT uk_venta_evento_par UNIQUE (id_venta, id_evento)
+);

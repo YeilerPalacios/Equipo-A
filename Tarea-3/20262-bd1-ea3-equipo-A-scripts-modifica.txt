@@ -1,0 +1,98 @@
+--
+-- Scripts de Modificación de la Base de Datos
+-- Todas las instrucciones se deben realizar en secuencia sin errores
+--
+
+-- 1.1.- Agregar un campo a la tabla de usuarios de la red social
+ALTER TABLE usuario
+    ADD COLUMN telefono VARCHAR(20);
+
+-- 1.2.- Modificar un campo de la tabla de usuarios
+ALTER TABLE usuario
+    ALTER COLUMN nombre_completo TYPE VARCHAR(120);
+
+-- Gestionar una tabla "nueva"
+-- 1.- "agregar" una nueva tabla a la base de datos que tenga relación con el sistema
+-- 2.- Darle un nombre "coherente"
+-- 3.- Agregar campos coherentes con la tabla
+-- 4.- Realizar todas las operaciones que se solicitan a continuación
+
+-- 1.3.1
+-- Crear una tabla "nueva" de su iniciativa
+-- Tabla "logro": catálogo de logros/insignias que el sistema puede otorgar a los usuarios
+CREATE TABLE logro (
+    id_logro SERIAL PRIMARY KEY
+);
+
+-- 1.3.2
+-- Agregar una clave primaria y otros 3 campos cualquiera a la tabla "nueva"
+-- Mínimo un campo tipo texto y uno numérico
+ALTER TABLE logro
+    ADD COLUMN nombre_logro VARCHAR(50) NOT NULL;
+
+ALTER TABLE logro
+    ADD COLUMN puntos INTEGER;
+
+ALTER TABLE logro
+    ADD COLUMN descripcion VARCHAR(255);
+
+-- 1.3.3
+-- Quitar uno de los campos de la tabla "nueva"
+ALTER TABLE logro
+    DROP COLUMN descripcion;
+
+-- 1.3.4
+-- Cambiar el nombre de la tabla "nueva" a otro nombre "otro_nombre"
+-- Todas las operaciones siguientes se realizan sobre la tabla renombrada
+ALTER TABLE logro
+    RENAME TO insignia;
+
+-- 1.3.5
+-- Agregar un campo único a la tabla
+ALTER TABLE insignia
+    ADD COLUMN codigo_insignia VARCHAR(20);
+
+ALTER TABLE insignia
+    ADD CONSTRAINT uk_insignia_codigo_insignia UNIQUE (codigo_insignia);
+
+-- 1.3.6
+-- Agregar 2 fechas de inicio y fin; y colocar un control de orden de fechas
+ALTER TABLE insignia
+    ADD COLUMN fecha_inicio DATE;
+
+ALTER TABLE insignia
+    ADD COLUMN fecha_fin DATE;
+
+ALTER TABLE insignia
+    ADD CONSTRAINT ck_insignia_orden_fechas CHECK (fecha_fin >= fecha_inicio);
+
+-- 1.3.7
+-- Agregar 1 campo entero y colocar un control para que no sea negativo
+ALTER TABLE insignia
+    ADD COLUMN nivel INTEGER;
+
+ALTER TABLE insignia
+    ADD CONSTRAINT ck_insignia_nivel_no_negativo CHECK (nivel >= 0);
+
+-- 1.3.8
+-- Modificar el tamaño de un campo texto de la tabla renombrada
+ALTER TABLE insignia
+    ALTER COLUMN nombre_logro TYPE VARCHAR(100);
+
+-- 1.3.7 (bis)
+-- Modificar el campo numérico y colocar un control de rango
+ALTER TABLE insignia
+    ADD CONSTRAINT ck_insignia_puntos_rango CHECK (puntos BETWEEN 0 AND 1000);
+
+-- 1.3.8 (bis)
+-- Agregar un índice a la tabla (cualquier campo)
+CREATE INDEX idx_insignia_nombre_logro ON insignia (nombre_logro);
+
+-- 1.3.9
+-- Eliminar una de las fechas
+ALTER TABLE insignia
+    DROP COLUMN fecha_fin CASCADE;
+
+-- 1.3.10
+-- Borrar todos los datos de una tabla sin dejar traza
+TRUNCATE TABLE insignia RESTART IDENTITY;
